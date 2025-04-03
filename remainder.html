@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centurion University Student Planner</title>
+    <style>
+          /* ... (existing styles remain the same) ... */
+
+      
+        /* Base Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('background.jpg');
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .logo {
+            max-width: 150px;
+            height: 50px;
+            object-fit: contain;
+            margin-right: 25px;
+        }
+
+        .header-text h1 {
+            margin: 0;
+            font-size: 1.8em;
+            color: #4CAF50;
+        }
+
+        .header-text p {
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            color: #ddd;
+        }
+
+        /* Main Content Styles */
+        .container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            min-height: 400px;
+        }
+
+        .task-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #a47373;
+            color: #fff;
+            padding: 1px;
+            text-align: center;
+        }
+
+        .task-list, .class-list {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .task-item, .class-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .task-item:hover, .class-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .delete-btn {
+            background: #ff4444;
+            padding: 5px 15px;
+        }
+
+        .speech-btn {
+            background: #2196F3;
+            padding: 10px 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="Logo.png" alt="Centurion University Logo" class="logo">
+        <div class="header-text">
+            <h1>Student Planner</h1>
+            <p>Organize Your Academic Life</p>
+        </div>
+    </div>
+   
+    <div class="container">
+        <div class="section">
+            <h2>Task Manager</h2>
+            <div class="task-input">
+                <input type="text" id="taskInput" placeholder="Enter task...">
+                <button onclick="addTask()">Add Task</button>
+                <button class="speech-btn" onclick="startSpeechRecognition()">🎤</button>
+            </div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+
+        <div class="section">
+            <h2>Class Schedule</h2>
+            <div class="class-form">
+                <input type="text" id="className" placeholder="Class Name">
+                <input type="time" id="classTime">
+                <input type="text" id="classDetails" placeholder="Additional Info">
+                <button onclick="addClass()">Add Class</button>
+            </div>
+            <footer>
+                <p>&copy; 2025 Centurion University. All rights reserved.
+                    Developed By Akhil@Diploma CSE
+                </p>
+            </footer>
+            <div class="class-schedule">
+                <ul class="class-list" id="classList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Task and Class Management
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let classes = JSON.parse(localStorage.getItem('classes')) || [];
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            if (!taskInput.value.trim()) return;
+
+            const task = {
+                text: taskInput.value,
+                timestamp: new Date().toISOString(),
+            };
+
+            tasks.push(task);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            displayTask(task);
+            taskInput.value = '';
+        }
+
+        function displayTask(task) {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.innerHTML = `
+                <span>${task.text}</span>
+                <small>${new Date(task.timestamp).toLocaleString()}</small>
+                <button class="delete-btn" onclick="deleteTask('${task.timestamp}')">Delete</button>
+            `;
+            document.getElementById('taskList').appendChild(li);
+        }
+
+        function deleteTask(timestamp) {
+            tasks = tasks.filter(task => task.timestamp !== timestamp);
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            loadTasks();
+        }
+
+        function loadTasks() {
+            document.getElementById('taskList').innerHTML = '';
+            tasks.forEach(displayTask);
+        }
+
+        function addClass() {
+            const className = document.getElementById('className');
+            const classTime = document.getElementById('classTime');
+            const classDetails = document.getElementById('classDetails');
+
+            if (!className.value.trim() || !classTime.value) return;
+
+            const classData = {
+                name: className.value,
+                time: classTime.value,
+                details: classDetails.value || 'N/A',
+            };
+
+            classes.push(classData);
+            localStorage.setItem('classes', JSON.stringify(classes));
+            displayClass(classData);
+            className.value = '';
+            classTime.value = '';
+            classDetails.value = '';
+        }
+
+        function displayClass(cls) {
+            const li = document.createElement('li');
+            li.className = 'class-item';
+            li.innerHTML = `
+                <div>
+                    <strong>${cls.name}</strong><br>
+                    <span>Time: ${cls.time}</span><br>
+                    <span>Details: ${cls.details}</span>
+                </div>
+                <button class="delete-btn" onclick="deleteClass('${cls.name}')">Delete</button>
+            `;
+            document.getElementById('classList').appendChild(li);
+        }
+
+        function deleteClass(className) {
+            classes = classes.filter(cls => cls.name !== className);
+            localStorage.setItem('classes', JSON.stringify(classes));
+            loadClasses();
+        }
+
+        function loadClasses() {
+            document.getElementById('classList').innerHTML = '';
+            classes.forEach(displayClass);
+        }
+
+        // Speech Recognition
+        function startSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window)) return;
+
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.onresult = (event) => {
+                document.getElementById('taskInput').value = event.results[0][0].transcript;
+            };
+            recognition.start();
+        }
+
+        // Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTasks();
+            loadClasses();
+        });
+
+        // Enter Key Support
+        document.getElementById('taskInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addTask();
+        });
+    </script>
+</body>
+</html>
